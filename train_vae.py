@@ -90,7 +90,7 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, default='vqvae')
     parser.add_argument('--embed_dim', type=int, default=256,
                     help='number of embedding dimension for codebook')       
-    parser.add_argument('--codebook_dim', type=int, default=1024,
+    parser.add_argument('--codebook_dim', type=int, default=512,
                     help='codebook size')        
     parser.add_argument('--double_z', type=bool, default=False,
                     help='double z for encoder')
@@ -104,7 +104,7 @@ if __name__ == "__main__":
                     help='output image channel')    
     parser.add_argument('--hidden_dim', type=int, default=128,
                     help='hidden dimension init size')  
-    parser.add_argument('--ch_mult', type=list, default=[1,1,2,2,4],
+    parser.add_argument('--ch_mult', type=list, default=[1,1,2,4],
                     help='resnet channel multiplier')  
     parser.add_argument('--num_res_blocks', type=int, default=2,
                     help='number of resnet blocks')                     
@@ -203,8 +203,8 @@ if __name__ == "__main__":
     print("Setting batch size: {} learning rate: {:.2e}".format(model.hparams.batch_size, model.hparams.learning_rate))
     
     if not args.test:    
-        trainer.fit(model, datamodule=datamodule)
+        trainer.fit(model.to('cuda:0'), datamodule=datamodule)
     else:
-        trainer.test(model, datamodule=datamodule)
+        trainer.test(model.cuda(), datamodule=datamodule)
 
 

@@ -91,8 +91,8 @@ class ImageDataModule(LightningDataModule):
                     .batched(BATCH_SIZE, partial=False) # It is good to avoid partial batches when using Distributed training
                     )                                     
             else:
-                self.train_dataset = ImageFolder(self.train_dir, self.transform)
-                self.val_dataset = ImageFolder(self.val_dir, self.transform)
+                self.train_dataset = ImageFolder(self.train_dir, self.transform_train)
+                self.val_dataset = ImageFolder(self.val_dir, self.transform_val)
   
 
     def train_dataloader(self):
@@ -358,3 +358,49 @@ class TextImageDataset(Dataset):
 
         # Success
         return tokenized_text, image_tensor
+
+import os
+import PIL
+import numpy as np
+import albumentations
+from torch.utils.data import Dataset
+
+from taming.data.base import ImagePaths, NumpyPaths, ConcatDatasetWithIndex
+
+
+class CustomBase(Dataset):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.data = None
+        self.num_corrupted = 0
+
+    def __len__(self):
+        return len(self.data) - self.num_corrupted
+
+    def __getitem__(self, i):
+        try:
+            example = self.data[i]
+        except (PIL.UnidentifiedImageError, OSError) as img_not_found_ex:
+            print(f'Image not found. Skipping')
+            self.num_corrupted = self.num_corrupted + 1
+            return self.__getitem__(i+1)
+        return example
+
+
+
+class CustomTrain(CustomBase):
+    def __init__(self, size, training_images_list_file):
+        super().__init__()
+        with open(training_images_list_file, "r") as f:
+            paths = f.read().splitlines()
+        self.data = ImagePaths(paths=paths, size=size, random_crop=False)
+
+
+class CustomTest(CustomBase):
+    def __init__(self, size, test_images_list_file):
+        super().__init__()
+        with open(test_images_list_file, "r") as f:
+            paths = f.read().splitlines()
+        self.data = ImagePaths(paths=paths, size=size, random_crop=False)
+
+

@@ -17,7 +17,8 @@ class VectorQuantizer(nn.Module):
         # reshape z -> (batch, height, width, channel) and flatten
         #z, 'b c h w -> b h w c'
         z = z.permute(0, 2, 3, 1)
-        z_flattened = z.view(-1, self.embedding_dim)
+        #z_flattened = z.view(-1, self.embedding_dim)
+        z_flattened = z.reshape(-1, self.embedding_dim)
         # distances from z to embeddings e_j (z - e)^2 = z^2 + e^2 - 2 e * z
 
         d = torch.sum(z_flattened ** 2, dim=1, keepdim=True) + \
@@ -119,6 +120,7 @@ class GumbelQuantizer(nn.Module):
         self.kl_weight = kl_weight
 
         self.embed = nn.Embedding(codebook_dim, embedding_dim)
+        self.embedding = self.embed
         self.embedding.weight.data.uniform_(-1.0 / self.codebook_dim, 1.0 / self.codebook_dim)
 
         self.use_vqinterface = use_vqinterface
